@@ -1,12 +1,9 @@
 import pandas as pd
-import geopandas 
 import numpy as np
 import streamlit as st
 from streamlit_folium import folium_static
-
 import folium
 from folium.plugins import MarkerCluster
-
 import plotly.express as px
 
 st.set_page_config(layout = 'wide')
@@ -15,12 +12,6 @@ st.set_page_config(layout = 'wide')
 def get_data(path):
     data = pd.read_csv(path)
     return data
-
-@st.cache(allow_output_mutation = True)
-def get_geofile(url):
-    geofile = geopandas.read_file(url)
-
-    return geofile
 
 def set_feature(data):
     data['price_m2'] = data['price'] / data['sqft_lot']
@@ -77,13 +68,13 @@ def overview_data(data):
     c2.dataframe(df1, height = 500)
     return None
 
-def portfolio_density(data, geofile):
+def portfolio_density(data):
     st.title('Region Overview')
 
-    c1, c2 = st.beta_columns((1, 1))
+    c1, c2 = st.beta_columns((5, 1))
     c1.header('Portifolio Density')
 
-    df = data.sample(10)
+    df = data.copy()
 
     # Base Map - Folium
     density_map = folium.Map(location = [
@@ -101,33 +92,7 @@ def portfolio_density(data, geofile):
                                                                                                                             row['bathrooms'],
                                                                                                                             row['yr_built'])).add_to(marker_cluster)
     with c1:
-        folium_static(density_map)
-
-    # Region Price Map
-    c2.header('Price Density')
-
-    df = data[['price', 'zipcode']].groupby('zipcode').mean().reset_index()
-    df.columns = ['zip', 'price']
-
-    df = df.sample(10)
-    geofile = geofile[geofile['ZIP'].isin(df['zip'].tolist())]
-
-    region_map = folium.Map(location = [
-                                data['lat'].mean(), 
-                                data['long'].mean()],
-                                default_zoom_star = 15)
-                                
-    region_map.choropleth(data = df, 
-                          geo_data = geofile,
-                          columns = ['zip', 'price'],
-                          key_on = 'feature.properties.ZIP',
-                          fill_color = 'YlOrRd',
-                          fill_opacity = 0.7,
-                          line_opacity = 0.2,
-                          legend_name = 'AVG PRICE')
-
-    with c2:
-        folium_static(region_map)
+        folium_static(density_map)  
 
     return None
 
@@ -200,13 +165,10 @@ def commercial(data):
 if __name__ == '__main__':
     # Data Extraction
     PATH = 'base/kc_house_data.csv'
-    url = 'http://opendata.arcgis.com/datasets/83fc2e72903343aabff6de8cb445b81c_2.geoj'
     
     data = get_data(PATH)
-    geofile = get_geofile(url)
     
     # Transformation
     data = set_feature(data)
     overview_data(data)
-    portfolio_density(data, geofile)
-    commercial(data)
+    portfolio_density(data)
