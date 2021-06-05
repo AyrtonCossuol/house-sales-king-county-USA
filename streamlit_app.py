@@ -66,6 +66,8 @@ def overview_data(data):
 
     c2.header('Descriptive Analysis')
     c2.dataframe(df1, height = 500)
+
+    
     return None
 
 def portfolio_density(data):
@@ -74,7 +76,7 @@ def portfolio_density(data):
     c1, c2 = st.beta_columns((5, 1))
     c1.header('Portifolio Density')
 
-    df = data.copy()
+    df = data.sample(100)
 
     # Base Map - Folium
     density_map = folium.Map(location = [
@@ -172,3 +174,4 @@ if __name__ == '__main__':
     data = set_feature(data)
     overview_data(data)
     portfolio_density(data)
+    st.text('By Ayrton Cossuol')
